@@ -70,6 +70,7 @@ try {
       extractTarball(tarPathCache);
     } else {
       const tarPathTemp = path.join(os.tmpdir(), `${process.pid}-${tarFilename}`);
+      npmLog.info('tarPathTemp', tarPathTemp);
       const tmpFile = fs.createWriteStream(tarPathTemp);
       const url = distBaseUrl + tarFilename;
       npmLog.info('sharp', `Downloading ${url}`);
@@ -81,11 +82,17 @@ try {
           throw new Error(`Status ${response.statusCode}`);
         }
         response
-          .on('error', fail)
+          .on('error', function (err) {
+            npmLog.error('response error', err);
+            fail(err);
+          })
           .pipe(tmpFile);
       });
       tmpFile
-        .on('error', fail)
+        .on('error', function (err) {
+          npmLog.error('tmpFile error', err);
+          fail(err);
+        })
         .on('close', function () {
           try {
             // Attempt to rename
